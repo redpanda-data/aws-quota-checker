@@ -190,10 +190,10 @@ class SpotXRequestCountCheck(QuotaCheck):
         return len(list(filter(lambda inst: inst['LaunchSpecification']['InstanceType'][0] in ['x'], requests)))
 
 
-class ElasticIpCountCheck(QuotaCheck):
+class ElasticIpCountCheck(RegionQuotaCheck):
     key = "ec2_eip_count"
     description = "EC2 VPC Elastic IPs"
-    scope = QuotaScope.ACCOUNT
+    scope = QuotaScope.REGION
     service_code = 'ec2'
     quota_code = 'L-0263D0A3'
 
