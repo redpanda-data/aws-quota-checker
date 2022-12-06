@@ -25,7 +25,7 @@ def get_all_spot_requests(session: boto3.Session):
 class OnDemandStandardInstanceCountCheck(RegionQuotaCheck):
     key = "ec2_on_demand_standard_count"
     description = "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) EC2 instances"
-    scope = QuotaScope.ACCOUNT
+    scope = QuotaScope.REGION
     service_code = "ec2"
     quota_code = "L-1216C47A"
 
