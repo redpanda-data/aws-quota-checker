@@ -70,15 +70,15 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.CR_PAT }}
       - name: Build Docker image
-        run: docker build . --tag ghcr.io/brennerm/aws-quota-checker:latest
+        run: docker build . --tag public.ecr.aws/l9j0i2e0/aws-quota-checker-redpanda:latest
       - name: Push Docker image for branch
         if: ${{ github.ref == 'refs/heads/master' && github.event_name == 'push' }}
         run: |
-          docker tag ghcr.io/brennerm/aws-quota-checker:latest ghcr.io/brennerm/aws-quota-checker:master
-          docker push ghcr.io/brennerm/aws-quota-checker:master
+          docker tag public.ecr.aws/l9j0i2e0/aws-quota-checker-redpanda:latest public.ecr.aws/l9j0i2e0/aws-quota-checker-redpanda:master
+          docker push public.ecr.aws/l9j0i2e0/aws-quota-checker-redpanda:master
       - name: Push Docker image for tag
         if: ${{ startsWith(github.ref, 'refs/tags') && github.event_name == 'push' }}
         run: |
-          docker tag ghcr.io/brennerm/aws-quota-checker:latest ghcr.io/brennerm/aws-quota-checker:${GITHUB_REF##*/}
-          docker push ghcr.io/brennerm/aws-quota-checker:latest
-          docker push ghcr.io/brennerm/aws-quota-checker:${GITHUB_REF##*/}
+          docker tag public.ecr.aws/l9j0i2e0/aws-quota-checker-redpanda:latest public.ecr.aws/l9j0i2e0/aws-quota-checker-redpanda:${GITHUB_REF##*/}
+          docker push public.ecr.aws/l9j0i2e0/aws-quota-checker-redpanda:latest
+          docker push public.ecr.aws/l9j0i2e0/aws-quota-checker-redpanda:${GITHUB_REF##*/}
