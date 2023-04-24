@@ -4,7 +4,7 @@ import typing
 import boto3
 import botocore.exceptions
 import cachetools
-from .quota_check import InstanceQuotaCheck, RegionQuotaCheck, QuotaScope
+from .quota_check import InstanceQuotaCheck, RegionQuotaCheck, QuotaScope, AvailabilityZoneQuotaCheck
 
 
 def check_if_vpc_exists(session: boto3.Session, vpc_id: str) -> bool:
@@ -55,6 +55,26 @@ def get_rt_by_id(session: boto3.Session, rt_id: str) -> dict:
 @cachetools.cached(cache=cachetools.TTLCache(1, 60))
 def get_all_network_acls(session: boto3.Session) -> typing.List[dict]:
     return session.client('ec2').describe_network_acls()['NetworkAcls']
+
+
+@cachetools.cached(cache=cachetools.TTLCache(1, 60))
+def get_all_subnets(session: boto3.Session) -> typing.List[dict]:
+    return session.client('ec2').describe_subnets()['Subnets']
+
+
+def get_subnet_by_az(session: boto3.Session, az_name: str) -> typing.List[dict]:
+    return filter(lambda subnet: az_name == subnet['AvailabilityZone'], get_all_subnets(session))
+
+
+@cachetools.cached(cache=cachetools.TTLCache(1, 60))
+def get_all_ngs(session: boto3.Session) -> typing.List[dict]:
+    return session.client('ec2').describe_nat_gateways()['NatGateways']
+
+
+def get_ng_by_az(session: boto3.Session, az_name: str) -> typing.List[str]:
+    ng_subnet_ids = [ng['SubnetId'] for ng in get_all_ngs(session)]
+    subnet_az_ids = [subnet['SubnetId'] for subnet in get_subnet_by_az(session, az_name)]
+    return list(filter(lambda ng: ng in subnet_az_ids, ng_subnet_ids))
 
 
 class VpcCountCheck(RegionQuotaCheck):
@@ -117,16 +137,16 @@ class SecurityGroupCountCheck(RegionQuotaCheck):
         return len(self.boto_session.client('ec2').describe_security_groups()['SecurityGroups'])
 
 
-class NatGatewayCountCheck(RegionQuotaCheck):
-    key = "nat_count"
-    description = "NAT gateways per Region"
-    scope = QuotaScope.REGION
+class NatGatewayCountCheck(AvailabilityZoneQuotaCheck):
+    key = "ng_count"
+    description = "NAT gateways per Availability Zone"
+    scope = QuotaScope.AZ
     service_code = 'vpc'
     quota_code = 'L-FE5A380F'
 
     @property
     def current(self):
-        return len(self.boto_session.client('ec2').describe_nat_gateways()['NatGateways'])
+        return len(get_ng_by_az(self.boto_session, self.az))
 
 
 class RulesPerSecurityGroupCheck(InstanceQuotaCheck):
