@@ -28,7 +28,8 @@ def __all_subclasses(cls):
 
 
 ALL_CHECKS = sorted(
-    [clazz for clazz in __all_subclasses(QuotaCheck) if clazz not in [InstanceQuotaCheck, RegionQuotaCheck]],
+    [clazz for clazz in __all_subclasses(QuotaCheck) if clazz not in [InstanceQuotaCheck, RegionQuotaCheck, AvailabilityZoneQuotaCheck]],
     key=lambda clz: clz.key,
 )
 ALL_INSTANCE_SCOPED_CHECKS = list(filter(lambda check: check.scope == QuotaScope.INSTANCE, ALL_CHECKS))
+ALL_AZ_SCOPED_CHECKS = list(filter(lambda check: check.scope == QuotaScope.AZ, ALL_CHECKS))
