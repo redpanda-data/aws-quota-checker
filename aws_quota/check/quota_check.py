@@ -9,6 +9,7 @@ class QuotaScope(enum.Enum):
     ACCOUNT = 0
     REGION = 1
     INSTANCE = 2
+    AZ = 3
 
 
 class QuotaCheck:
@@ -40,11 +41,14 @@ class QuotaCheck:
             'account': get_account_id(self.boto_session)
         }
 
-        if self.scope in (QuotaScope.REGION, QuotaScope.INSTANCE):
+        if self.scope in (QuotaScope.REGION, QuotaScope.INSTANCE, QuotaScope.AZ):
             label_values['region'] = self.boto_session.region_name
 
         if self.scope == QuotaScope.INSTANCE:
             label_values['instance'] = self.instance_id
+
+        if self.scope == QuotaScope.AZ:
+            label_values['az'] = self.az
         return label_values
 
     @property
@@ -81,3 +85,22 @@ class RegionQuotaCheck(QuotaCheck):
         super().__init__(session)
 
         self.region = region
+
+class AvailabilityZoneQuotaCheck(QuotaCheck):
+    scope = QuotaScope.AZ
+    az: str = None
+
+    def __init__(self, session, az) -> None:
+        super().__init__(session)
+
+        self.az = az
+
+    @staticmethod
+    def get_availability_zones(session: boto3.Session) -> typing.List[str]:
+        azs = []
+        client = session.client('ec2')
+        filter = [
+            {'Name':'region-name', 'Values': [session.region_name]},
+            {'Name':'state', 'Values': ['available']}
+        ]
+        return [az['ZoneName'] for az in client.describe_availability_zones(Filters=filter)['AvailabilityZones']]

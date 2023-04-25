@@ -7,7 +7,7 @@ import boto3
 import click
 import tabulate
 
-from aws_quota.check.quota_check import RegionQuotaCheck, InstanceQuotaCheck, QuotaCheck, QuotaScope
+from aws_quota.check.quota_check import AvailabilityZoneQuotaCheck, RegionQuotaCheck, InstanceQuotaCheck, QuotaCheck, QuotaScope
 from aws_quota.check import ALL_CHECKS, ALL_INSTANCE_SCOPED_CHECKS
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ def check_keys_to_check_classes(check_string: str):
         filter(lambda c: c.key not in blacklisted_check_keys, selected_checks))
 
 
-def check_regions(regions: str):
+def check_regions(regions: str) -> typing.List[str]:
     if regions is not None:
         return regions.split(',')
     else:
@@ -120,6 +120,8 @@ class Runner:
                 scope = get_account_id(self.session)
             elif chk.scope == QuotaScope.REGION:
                 scope = f'{get_account_id(self.session)}/{chk.region}'
+            elif chk.scope == QuotaScope.AZ:
+                scope = f'{get_account_id(self.session)}/{chk.boto_session.region_name}/{chk.az}'
             elif chk.scope == QuotaScope.INSTANCE:
                 scope = f'{get_account_id(self.session)}/{self.session.region_name}/{chk.instance_id}'
 
@@ -189,10 +191,7 @@ def check(check_keys, regions, profile, warning_threshold, error_threshold, fail
 
     regions = check_regions(regions)
 
-    if regions is not None:
-        session = boto3.Session(region_name=regions[0], profile_name=profile)
-    else:
-        session = boto3.Session(region_name=regions, profile_name=profile)
+    session = boto3.Session(region_name=regions[0], profile_name=profile)
 
     click.echo(
         f'AWS profile: {session.profile_name} | AWS region: {session.region_name} | Active checks: {",".join([check.key for check in selected_checks])}')
@@ -213,6 +212,11 @@ def check(check_keys, regions, profile, warning_threshold, error_threshold, fail
                         checks.append(chk(session, rg))
                 except TypeError:
                     checks.append(chk(session, region=session.region_name))
+            elif issubclass(chk, AvailabilityZoneQuotaCheck):
+                for rg in regions:
+                    session = boto3.Session(region_name=rg, profile_name=profile)
+                    for az in chk.get_availability_zones(session):
+                        checks.append(chk(session, az))
             else:
                 checks.append(chk(session))
 
