@@ -32,7 +32,7 @@ class ClassicLoadBalancerCountCheck(RegionQuotaCheck):
     @property
     def current(self):
         return len(
-            self.boto_session.client('elb').describe_load_balancers()['LoadBalancerDescriptions']
+            self.client('elb').describe_load_balancers()['LoadBalancerDescriptions']
         )
 
 
@@ -54,11 +54,11 @@ class ListenerPerClassicLoadBalancerCountCheck(InstanceQuotaCheck):
     def current(self):
         try:
             return len(
-                self.boto_session.client('elb').describe_load_balancers(
+                self.client('elb').describe_load_balancers(
                     LoadBalancerNames=[self.instance_id]
                 )['LoadBalancerDescriptions'][0]['ListenerDescriptions']
             )
-        except self.boto_session.client('elb').exceptions.AccessPointNotFoundException as e:
+        except self.client('elb').exceptions.AccessPointNotFoundException as e:
             raise InstanceWithIdentifierNotFound(self) from e
 
 
@@ -75,7 +75,7 @@ class NetworkLoadBalancerCountCheck(RegionQuotaCheck):
             list(
                 filter(
                     lambda lb: lb['Type'] == 'network',
-                    self.boto_session.client('elbv2').describe_load_balancers()['LoadBalancers'],
+                    self.client('elbv2').describe_load_balancers()['LoadBalancers'],
                 )
             )
         )
@@ -96,11 +96,11 @@ class ListenerPerNetworkLoadBalancerCountCheck(InstanceQuotaCheck):
     def current(self):
         try:
             return len(
-                self.boto_session.client('elbv2').describe_listeners(
+                self.client('elbv2').describe_listeners(
                     LoadBalancerArn=self.instance_id
                 )['Listeners']
             )
-        except self.boto_session.client('elbv2').exceptions.LoadBalancerNotFoundException as e:
+        except self.client('elbv2').exceptions.LoadBalancerNotFoundException as e:
             raise InstanceWithIdentifierNotFound(self) from e
 
 
@@ -131,11 +131,11 @@ class ListenerPerApplicationLoadBalancerCountCheck(InstanceQuotaCheck):
     def current(self) -> int:
         try:
             return len(
-                self.boto_session.client('elbv2').describe_listeners(
+                self.client('elbv2').describe_listeners(
                     LoadBalancerArn=self.instance_id
                 )['Listeners']
             )
-        except self.boto_session.client('elbv2').exceptions.LoadBalancerNotFoundException as e:
+        except self.client('elbv2').exceptions.LoadBalancerNotFoundException as e:
             raise InstanceWithIdentifierNotFound(self) from e
 
 
@@ -148,7 +148,7 @@ class TargetGroupCountCheck(RegionQuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('elbv2').describe_target_groups()['TargetGroups'])
+        return len(self.client('elbv2').describe_target_groups()['TargetGroups'])
 
 
 class TargetGroupsPerApplicationLoadBalancerCountCheck(InstanceQuotaCheck):
@@ -166,9 +166,9 @@ class TargetGroupsPerApplicationLoadBalancerCountCheck(InstanceQuotaCheck):
     def current(self) -> int:
         try:
             return len(
-                self.boto_session.client('elbv2').describe_target_groups(
+                self.client('elbv2').describe_target_groups(
                     LoadBalancerArn=self.instance_id
                 )['TargetGroups']
             )
-        except self.boto_session.client('elbv2').exceptions.LoadBalancerNotFoundException as e:
+        except self.client('elbv2').exceptions.LoadBalancerNotFoundException as e:
             raise InstanceWithIdentifierNotFound(self) from e

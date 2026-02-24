@@ -10,7 +10,7 @@ class EndpointCountCheck(RegionQuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('route53resolver').list_resolver_endpoints()['ResolverEndpoints'])
+        return len(self.client('route53resolver').list_resolver_endpoints()['ResolverEndpoints'])
 
 
 class RulesCountCheck(RegionQuotaCheck):
@@ -22,7 +22,7 @@ class RulesCountCheck(RegionQuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('route53resolver').list_resolver_rules()['ResolverRules'])
+        return len(self.client('route53resolver').list_resolver_rules()['ResolverRules'])
 
 
 class RuleAssociationsCountCheck(RegionQuotaCheck):
@@ -34,4 +34,4 @@ class RuleAssociationsCountCheck(RegionQuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('route53resolver').list_resolver_rule_associations()['ResolverRuleAssociations'])
+        return len(self.client('route53resolver').list_resolver_rule_associations()['ResolverRuleAssociations'])

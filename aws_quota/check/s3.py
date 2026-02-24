@@ -10,4 +10,4 @@ class BucketCountCheck(RegionQuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('s3').list_buckets()['Buckets'])
+        return len(self.client('s3').list_buckets()['Buckets'])

@@ -10,7 +10,7 @@ class ApplicationCountCheck(QuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('elasticbeanstalk').describe_applications()['Applications'])
+        return len(self.client('elasticbeanstalk').describe_applications()['Applications'])
 
 
 class EnvironmentCountCheck(QuotaCheck):
@@ -22,4 +22,4 @@ class EnvironmentCountCheck(QuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('elasticbeanstalk').describe_environments()['Environments'])
+        return len(self.client('elasticbeanstalk').describe_environments()['Environments'])

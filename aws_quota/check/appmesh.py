@@ -10,4 +10,4 @@ class MeshCountCheck(QuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('appmesh').list_meshes()['meshes'])
+        return len(self.client('appmesh').list_meshes()['meshes'])
