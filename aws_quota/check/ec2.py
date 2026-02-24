@@ -2,9 +2,13 @@ from .quota_check import QuotaCheck, QuotaScope, RegionQuotaCheck
 
 import boto3
 import cachetools
+import cachetools.keys
 
 
-@cachetools.cached(cache=cachetools.TTLCache(1, 60))
+@cachetools.cached(
+    cache=cachetools.TTLCache(maxsize=64, ttl=60),
+    key=lambda session: cachetools.keys.hashkey(session.region_name)
+)
 def get_all_running_ec2_instances(session: boto3.Session):
     return [instance for reservations in session.client('ec2').describe_instances(
             Filters=[
@@ -16,7 +20,10 @@ def get_all_running_ec2_instances(session: boto3.Session):
             )['Reservations'] for instance in reservations['Instances']]
 
 
-@cachetools.cached(cache=cachetools.TTLCache(1, 60))
+@cachetools.cached(
+    cache=cachetools.TTLCache(maxsize=64, ttl=60),
+    key=lambda session: cachetools.keys.hashkey(session.region_name)
+)
 def get_all_spot_requests(session: boto3.Session):
     return session.client('ec2').describe_spot_instance_requests()[
         'SpotInstanceRequests']
@@ -199,7 +206,7 @@ class ElasticIpCountCheck(RegionQuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('ec2').describe_addresses()['Addresses'])
+        return len(self.client('ec2').describe_addresses()['Addresses'])
 
 
 class TransitGatewayCountCheck(QuotaCheck):
@@ -211,7 +218,7 @@ class TransitGatewayCountCheck(QuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('ec2').describe_transit_gateways()['TransitGateways'])
+        return len(self.client('ec2').describe_transit_gateways()['TransitGateways'])
 
 
 class VpnConnectionCountCheck(RegionQuotaCheck):
@@ -223,4 +230,4 @@ class VpnConnectionCountCheck(RegionQuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('ec2').describe_vpn_connections()['VpnConnections'])
+        return len(self.client('ec2').describe_vpn_connections()['VpnConnections'])
