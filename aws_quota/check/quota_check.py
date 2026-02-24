@@ -23,13 +23,21 @@ class QuotaCheck:
         super().__init__()
 
         self.boto_session = boto_session
+        self._clients = {}
         self.sq_client = boto_session.client('service-quotas')
+
+    def client(self, service: str):
+        if service not in self._clients:
+            self._clients[service] = self.boto_session.client(service)
+        return self._clients[service]
 
     def __str__(self) -> str:
         return f'{self.key}{self.label_values}'
 
-    def count_paginated_results(self, service: str, method: str, key: str, paginate_args: dict = {}) -> int:
-        paginator = self.boto_session.client(service).get_paginator(method)
+    def count_paginated_results(self, service: str, method: str, key: str, paginate_args: dict = None) -> int:
+        if paginate_args is None:
+            paginate_args = {}
+        paginator = self.client(service).get_paginator(method)
         pagination_config = {'PageSize': 100}
         page_iterable = paginator.paginate(**{"PaginationConfig": pagination_config, **paginate_args})
         return sum(len(page[key]) for page in page_iterable)
