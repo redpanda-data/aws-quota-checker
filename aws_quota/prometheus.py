@@ -36,6 +36,7 @@ class PrometheusExporter:
         self.checks = []
         self.regions = regions
         self.settings = settings
+        self._sessions = {}
 
         # unregister default collectors
         for name in list(prom.REGISTRY._names_to_collectors.values()):
@@ -102,13 +103,17 @@ class PrometheusExporter:
                                 )
                         elif issubclass(chk, RegionQuotaCheck):
                             for rg in self.regions:
-                                self.session = boto3.Session(region_name=rg)
-                                checks.append(chk(self.session, rg))
+                                if rg not in self._sessions:
+                                    self._sessions[rg] = boto3.Session(region_name=rg)
+                                session = self._sessions[rg]
+                                checks.append(chk(session, rg))
                         elif issubclass(chk, AvailabilityZoneQuotaCheck):
                             for rg in self.regions:
-                                self.session = boto3.Session(region_name=rg)
-                                for az in chk.get_availability_zones(self.session):
-                                    checks.append(chk(self.session, az))
+                                if rg not in self._sessions:
+                                    self._sessions[rg] = boto3.Session(region_name=rg)
+                                session = self._sessions[rg]
+                                for az in chk.get_availability_zones(session):
+                                    checks.append(chk(session, az))
                         else:
                             checks.append(chk(self.session))
                     except Exception:
