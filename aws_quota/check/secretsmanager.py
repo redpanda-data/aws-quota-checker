@@ -10,4 +10,4 @@ class SecretCountCheck(QuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('secretsmanager').list_secrets()['SecretList'])
+        return len(self.client('secretsmanager').list_secrets()['SecretList'])

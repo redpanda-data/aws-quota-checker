@@ -10,4 +10,4 @@ class TableCountCheck(RegionQuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('dynamodb').list_tables()['TableNames'])
+        return len(self.client('dynamodb').list_tables()['TableNames'])

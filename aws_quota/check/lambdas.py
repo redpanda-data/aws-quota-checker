@@ -11,7 +11,7 @@ class FunctionAndLayerStorageCheck(RegionQuotaCheck):
     @property
     def current(self):
         return (
-            self.boto_session.client('lambda').get_account_settings()['AccountUsage'][
+            self.client('lambda').get_account_settings()['AccountUsage'][
                 'TotalCodeSize'
             ]
             / 1000000000

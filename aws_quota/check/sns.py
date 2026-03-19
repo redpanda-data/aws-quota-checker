@@ -14,7 +14,7 @@ class TopicCountCheck(QuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('sns').list_topics()['Topics'])
+        return len(self.client('sns').list_topics()['Topics'])
 
 class PendingSubscriptionCountCheck(QuotaCheck):
     key = "sns_pending_subscriptions_count"
@@ -29,7 +29,7 @@ class PendingSubscriptionCountCheck(QuotaCheck):
         pending_subs = 0
 
         for arn in all_topic_arns:
-            pending_subs += int(self.boto_session.client('sns').get_topic_attributes(TopicArn=arn)['Attributes']['SubscriptionsPending'])
+            pending_subs += int(self.client('sns').get_topic_attributes(TopicArn=arn)['Attributes']['SubscriptionsPending'])
 
         return pending_subs
 
@@ -47,8 +47,8 @@ class SubscriptionsPerTopicCheck(InstanceQuotaCheck):
     @property
     def current(self):
         try:
-            topic_attrs = self.boto_session.client('sns').get_topic_attributes(TopicArn=self.instance_id)['Attributes']
-        except self.boto_session.client('sns').exceptions.NotFoundException as e:
+            topic_attrs = self.client('sns').get_topic_attributes(TopicArn=self.instance_id)['Attributes']
+        except self.client('sns').exceptions.NotFoundException as e:
             raise InstanceWithIdentifierNotFound(self) from e
 
         return int(topic_attrs['SubscriptionsConfirmed']) + int(topic_attrs['SubscriptionsPending'])

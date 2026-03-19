@@ -10,4 +10,4 @@ class ClusterCountCheck(RegionQuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('ecs').list_clusters()['clusterArns'])
+        return len(self.client('ecs').list_clusters()['clusterArns'])

@@ -10,4 +10,4 @@ class ClusterCountCheck(RegionQuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('eks').list_clusters()['clusters'])
+        return len(self.client('eks').list_clusters()['clusters'])

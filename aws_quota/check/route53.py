@@ -11,11 +11,11 @@ class HostedZoneCountCheck(QuotaCheck):
 
     @property
     def maximum(self):
-        return self.boto_session.client('route53').get_account_limit(Type='MAX_HOSTED_ZONES_BY_OWNER')['Limit']['Value']
+        return self.client('route53').get_account_limit(Type='MAX_HOSTED_ZONES_BY_OWNER')['Limit']['Value']
 
     @property
     def current(self):
-        return self.boto_session.client('route53').get_account_limit(Type='MAX_HOSTED_ZONES_BY_OWNER')['Count']
+        return self.client('route53').get_account_limit(Type='MAX_HOSTED_ZONES_BY_OWNER')['Count']
 
 
 class HealthCheckCountCheck(QuotaCheck):
@@ -25,11 +25,11 @@ class HealthCheckCountCheck(QuotaCheck):
 
     @property
     def maximum(self):
-        return self.boto_session.client('route53').get_account_limit(Type='MAX_HEALTH_CHECKS_BY_OWNER')['Limit']['Value']
+        return self.client('route53').get_account_limit(Type='MAX_HEALTH_CHECKS_BY_OWNER')['Limit']['Value']
 
     @property
     def current(self):
-        return self.boto_session.client('route53').get_account_limit(Type='MAX_HEALTH_CHECKS_BY_OWNER')['Count']
+        return self.client('route53').get_account_limit(Type='MAX_HEALTH_CHECKS_BY_OWNER')['Count']
 
 
 class ReusableDelegationSetCountCheck(QuotaCheck):
@@ -39,11 +39,11 @@ class ReusableDelegationSetCountCheck(QuotaCheck):
 
     @property
     def maximum(self):
-        return self.boto_session.client('route53').get_account_limit(Type='MAX_REUSABLE_DELEGATION_SETS_BY_OWNER')['Limit']['Value']
+        return self.client('route53').get_account_limit(Type='MAX_REUSABLE_DELEGATION_SETS_BY_OWNER')['Limit']['Value']
 
     @property
     def current(self):
-        return self.boto_session.client('route53').get_account_limit(Type='MAX_REUSABLE_DELEGATION_SETS_BY_OWNER')['Count']
+        return self.client('route53').get_account_limit(Type='MAX_REUSABLE_DELEGATION_SETS_BY_OWNER')['Count']
 
 
 class TrafficPolicyCountCheck(QuotaCheck):
@@ -53,11 +53,11 @@ class TrafficPolicyCountCheck(QuotaCheck):
 
     @property
     def maximum(self):
-        return self.boto_session.client('route53').get_account_limit(Type='MAX_TRAFFIC_POLICIES_BY_OWNER')['Limit']['Value']
+        return self.client('route53').get_account_limit(Type='MAX_TRAFFIC_POLICIES_BY_OWNER')['Limit']['Value']
 
     @property
     def current(self):
-        return self.boto_session.client('route53').get_account_limit(Type='MAX_TRAFFIC_POLICIES_BY_OWNER')['Count']
+        return self.client('route53').get_account_limit(Type='MAX_TRAFFIC_POLICIES_BY_OWNER')['Count']
 
 
 class TrafficPolicyInstanceCountCheck(QuotaCheck):
@@ -67,11 +67,11 @@ class TrafficPolicyInstanceCountCheck(QuotaCheck):
 
     @property
     def maximum(self):
-        return self.boto_session.client('route53').get_account_limit(Type='MAX_TRAFFIC_POLICY_INSTANCES_BY_OWNER')['Limit']['Value']
+        return self.client('route53').get_account_limit(Type='MAX_TRAFFIC_POLICY_INSTANCES_BY_OWNER')['Limit']['Value']
 
     @property
     def current(self):
-        return self.boto_session.client('route53').get_account_limit(Type='MAX_TRAFFIC_POLICY_INSTANCES_BY_OWNER')['Count']
+        return self.client('route53').get_account_limit(Type='MAX_TRAFFIC_POLICY_INSTANCES_BY_OWNER')['Count']
 
 
 class RecordsPerHostedZoneCheck(InstanceQuotaCheck):
@@ -86,15 +86,15 @@ class RecordsPerHostedZoneCheck(InstanceQuotaCheck):
     @property
     def maximum(self):
         try:
-            return self.boto_session.client('route53').get_hosted_zone_limit(Type='MAX_RRSETS_BY_ZONE', HostedZoneId=self.instance_id)['Limit']['Value']
-        except self.boto_session.client('route53').exceptions.NoSuchHostedZone as e:
+            return self.client('route53').get_hosted_zone_limit(Type='MAX_RRSETS_BY_ZONE', HostedZoneId=self.instance_id)['Limit']['Value']
+        except self.client('route53').exceptions.NoSuchHostedZone as e:
             raise InstanceWithIdentifierNotFound(self) from e
 
     @property
     def current(self):
         try:
-            return self.boto_session.client('route53').get_hosted_zone_limit(Type='MAX_RRSETS_BY_ZONE', HostedZoneId=self.instance_id)['Count']
-        except self.boto_session.client('route53').exceptions.NoSuchHostedZone as e:
+            return self.client('route53').get_hosted_zone_limit(Type='MAX_RRSETS_BY_ZONE', HostedZoneId=self.instance_id)['Count']
+        except self.client('route53').exceptions.NoSuchHostedZone as e:
             raise InstanceWithIdentifierNotFound(self) from e
 
 
@@ -110,13 +110,13 @@ class AssociatedVpcHostedZoneCheck(InstanceQuotaCheck):
     @property
     def maximum(self):
         try:
-            return self.boto_session.client('route53').get_hosted_zone_limit(Type='MAX_VPCS_ASSOCIATED_BY_ZONE', HostedZoneId=self.instance_id)['Limit']['Value']
-        except self.boto_session.client('route53').exceptions.NoSuchHostedZone as e:
+            return self.client('route53').get_hosted_zone_limit(Type='MAX_VPCS_ASSOCIATED_BY_ZONE', HostedZoneId=self.instance_id)['Limit']['Value']
+        except self.client('route53').exceptions.NoSuchHostedZone as e:
             raise InstanceWithIdentifierNotFound(self) from e
 
     @property
     def current(self):
         try:
-            return self.boto_session.client('route53').get_hosted_zone_limit(Type='MAX_VPCS_ASSOCIATED_BY_ZONE', HostedZoneId=self.instance_id)['Count']
-        except self.boto_session.client('route53').exceptions.NoSuchHostedZone as e:
+            return self.client('route53').get_hosted_zone_limit(Type='MAX_VPCS_ASSOCIATED_BY_ZONE', HostedZoneId=self.instance_id)['Count']
+        except self.client('route53').exceptions.NoSuchHostedZone as e:
             raise InstanceWithIdentifierNotFound(self) from e

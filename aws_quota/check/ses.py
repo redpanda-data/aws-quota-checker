@@ -10,4 +10,4 @@ class TopicCountCheck(RegionQuotaCheck):
 
     @property
     def current(self):
-        return self.boto_session.client('ses').get_send_quota()['SentLast24Hours']
+        return self.client('ses').get_send_quota()['SentLast24Hours']

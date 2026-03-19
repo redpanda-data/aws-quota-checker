@@ -4,6 +4,7 @@ import typing
 import boto3
 import botocore.exceptions
 import cachetools
+import cachetools.keys
 from .quota_check import InstanceQuotaCheck, RegionQuotaCheck, QuotaScope, AvailabilityZoneQuotaCheck
 
 
@@ -16,7 +17,10 @@ def check_if_vpc_exists(session: boto3.Session, vpc_id: str) -> bool:
     return True
 
 
-@cachetools.cached(cache=cachetools.TTLCache(1, 60))
+@cachetools.cached(
+    cache=cachetools.TTLCache(maxsize=64, ttl=60),
+    key=lambda session: cachetools.keys.hashkey(session.region_name)
+)
 def get_all_vpcs(session: boto3.Session) -> typing.List[dict]:
     return session.client('ec2').describe_vpcs()['Vpcs']
 
@@ -28,7 +32,10 @@ def get_vpc_by_id(session: boto3.Session, vpc_id: str) -> dict:
         raise KeyError
 
 
-@cachetools.cached(cache=cachetools.TTLCache(1, 60))
+@cachetools.cached(
+    cache=cachetools.TTLCache(maxsize=64, ttl=60),
+    key=lambda session: cachetools.keys.hashkey(session.region_name)
+)
 def get_all_sgs(session: boto3.Session) -> typing.List[dict]:
     return session.client('ec2').describe_security_groups()['SecurityGroups']
 
@@ -40,7 +47,10 @@ def get_sg_by_id(session: boto3.Session, sg_id: str) -> dict:
         raise KeyError
 
 
-@cachetools.cached(cache=cachetools.TTLCache(1, 60))
+@cachetools.cached(
+    cache=cachetools.TTLCache(maxsize=64, ttl=60),
+    key=lambda session: cachetools.keys.hashkey(session.region_name)
+)
 def get_all_rts(session: boto3.Session) -> typing.List[dict]:
     return session.client('ec2').describe_route_tables()['RouteTables']
 
@@ -52,12 +62,18 @@ def get_rt_by_id(session: boto3.Session, rt_id: str) -> dict:
         raise KeyError
 
 
-@cachetools.cached(cache=cachetools.TTLCache(1, 60))
+@cachetools.cached(
+    cache=cachetools.TTLCache(maxsize=64, ttl=60),
+    key=lambda session: cachetools.keys.hashkey(session.region_name)
+)
 def get_all_network_acls(session: boto3.Session) -> typing.List[dict]:
     return session.client('ec2').describe_network_acls()['NetworkAcls']
 
 
-@cachetools.cached(cache=cachetools.TTLCache(1, 60))
+@cachetools.cached(
+    cache=cachetools.TTLCache(maxsize=64, ttl=60),
+    key=lambda session: cachetools.keys.hashkey(session.region_name)
+)
 def get_all_subnets(session: boto3.Session) -> typing.List[dict]:
     return session.client('ec2').describe_subnets()['Subnets']
 
@@ -66,7 +82,10 @@ def get_subnet_by_az(session: boto3.Session, az_name: str) -> typing.List[dict]:
     return filter(lambda subnet: az_name == subnet['AvailabilityZone'], get_all_subnets(session))
 
 
-@cachetools.cached(cache=cachetools.TTLCache(1, 60))
+@cachetools.cached(
+    cache=cachetools.TTLCache(maxsize=64, ttl=60),
+    key=lambda session: cachetools.keys.hashkey(session.region_name)
+)
 def get_all_ngs(session: boto3.Session) -> typing.List[dict]:
     return session.client('ec2').describe_nat_gateways()['NatGateways']
 
@@ -98,7 +117,7 @@ class InternetGatewayCountCheck(RegionQuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('ec2').describe_internet_gateways()['InternetGateways'])
+        return len(self.client('ec2').describe_internet_gateways()['InternetGateways'])
 
 
 class VpcEndpointCountCheck(RegionQuotaCheck):
@@ -110,7 +129,7 @@ class VpcEndpointCountCheck(RegionQuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('ec2').describe_vpc_endpoints()['VpcEndpoints'])
+        return len(self.client('ec2').describe_vpc_endpoints()['VpcEndpoints'])
 
 
 class NetworkInterfaceCountCheck(RegionQuotaCheck):
@@ -122,7 +141,7 @@ class NetworkInterfaceCountCheck(RegionQuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('ec2').describe_network_interfaces()['NetworkInterfaces'])
+        return len(self.client('ec2').describe_network_interfaces()['NetworkInterfaces'])
 
 
 class SecurityGroupCountCheck(RegionQuotaCheck):
@@ -134,7 +153,7 @@ class SecurityGroupCountCheck(RegionQuotaCheck):
 
     @property
     def current(self):
-        return len(self.boto_session.client('ec2').describe_security_groups()['SecurityGroups'])
+        return len(self.client('ec2').describe_security_groups()['SecurityGroups'])
 
 
 class NatGatewayCountCheck(AvailabilityZoneQuotaCheck):
@@ -183,7 +202,7 @@ class RouteTablesPerVpcCheck(InstanceQuotaCheck):
     @property
     def current(self):
         if check_if_vpc_exists(self.boto_session, self.instance_id):
-            return len(self.boto_session.client('ec2').describe_route_tables(Filters=[
+            return len(self.client('ec2').describe_route_tables(Filters=[
                 {
                     'Name': 'vpc-id',
                     'Values': [self.instance_id]
@@ -226,7 +245,7 @@ class SubnetsPerVpcCheck(InstanceQuotaCheck):
     @property
     def current(self):
         if check_if_vpc_exists(self.boto_session, self.instance_id):
-            return len(self.boto_session.client('ec2').describe_subnets(Filters=[
+            return len(self.client('ec2').describe_subnets(Filters=[
                 {
                     'Name': 'vpc-id',
                     'Values': [self.instance_id]
@@ -249,7 +268,7 @@ class AclsPerVpcCheck(InstanceQuotaCheck):
     @property
     def current(self) -> int:
         if check_if_vpc_exists(self.boto_session, self.instance_id):
-            return len(self.boto_session.client('ec2').describe_network_acls(Filters=[
+            return len(self.client('ec2').describe_network_acls(Filters=[
                 {
                     'Name': 'vpc-id',
                     'Values': [self.instance_id]
